@@ -1,4 +1,4 @@
-# qBittorrent Speed Monitor Plasmoid (Widget-Qbittorrent-nox)
+# qBittorrent Speed Monitor Plasmoid (Widget-qBittorrent-nox)
 
 A lightweight, modern, and highly customizable **KDE Plasma 6** widget for monitoring real-time download/upload network traffic, historical transfer graphs, and lifetime statistics from your **qBittorrent-nox** or desktop qBittorrent WebUI.
 
@@ -6,29 +6,29 @@ A lightweight, modern, and highly customizable **KDE Plasma 6** widget for monit
 
 ---
 
-## ✨ Features
+## Features
 
-- ⚡ **Low CPU & Low Disk I/O**:
+- **Low CPU & Low Disk I/O**:
   - Adaptive polling (12-second relaxed background intervals when closed, fast live polling only when the popup is expanded).
   - Batched KConfig disk writes (10-minute intervals and system exit) to prevent constant drive activity.
   - Efficient HTML5 / QtQuick Canvas smooth Bezier spline graph rendering.
-- 📈 **Multi-Timeframe Transfer History**:
+- **Multi-Timeframe Transfer History**:
   - View network activity curves across **1 hour**, **12 hours**, **24 hours**, and **7 days**.
   - Displays total data transferred (downloaded & uploaded) specifically for the selected timeframe.
   - Persistent historical data caching across sessions and system reboots.
-- 📊 **Session & Lifetime Data Accounting**:
+- **Session & Lifetime Data Accounting**:
   - Live session download and upload counters.
   - Persistent lifetime data tracking with configurable starting totals.
-- 🎨 **Appearance & Customization**:
+- **Appearance & Customization**:
   - Customizable panel icon (native KDE icon selector or custom image file browser from `/usr/share/icons`).
   - Optional custom icon tinting / colourizing.
   - Configurable background color, opacity, corner rounding radius, text color, and individual download/upload curve colors.
-- 🔒 **Secure Authentication**:
+- **Secure Authentication**:
   - Full session cookie (`QBT_SID`) handling with automatic reconnect and re-authentication.
 
 ---
 
-## 🛠️ Installation
+## Installation
 
 ### Manual Installation
 
@@ -36,7 +36,7 @@ A lightweight, modern, and highly customizable **KDE Plasma 6** widget for monit
 
 ```bash
 mkdir -p ~/.local/share/plasma/plasmoids/
-git clone https://github.com/PlasmaDrifter/Widget-Qbittorrent-nox.git ~/.local/share/plasma/plasmoids/local.widget.qbittorrentgraph
+git clone https://github.com/PlasmaDrifter/Widget-qBittorrent-nox.git ~/.local/share/plasma/plasmoids/local.widget.qbittorrentgraph
 ```
 
 2. Reload `plasmashell` or log out and log back in:
@@ -49,7 +49,7 @@ plasmashell --replace &
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Right-click the widget on your panel or desktop and select **Configure qBittorrent Speed Monitor...**:
 
@@ -66,7 +66,7 @@ Right-click the widget on your panel or desktop and select **Configure qBittorre
 
 ---
 
-## 📋 Requirements
+## Requirements
 
 - **KDE Plasma**: 6.0+
 - **Qt Quick**: 6.0+
@@ -74,6 +74,6 @@ Right-click the widget on your panel or desktop and select **Configure qBittorre
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
