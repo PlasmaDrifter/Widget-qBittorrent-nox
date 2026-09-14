@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <entry name="webUiUrl" type="String">
+      <default>http://100.76.111.34:8080</default>
+    </entry>
+    <entry name="username" type="String">
+      <default>nobara</default>
+    </entry>
+    <entry name="password" type="String">
+      <default>zippy-escapade-Cornea-aLLenable908332</default>
+    </entry>
+    <entry name="updateInterval" type="Int">
+      <default>4</default>
+    </entry>
+    <entry name="selectedTimeframe" type="String">
+      <default>1h</default>
+    </entry>
+    <entry name="dlMaxMbps" type="Int">
+      <default>50</default>
+    </entry>
+    <entry name="upMaxKbps" type="Int">
+      <default>2000</default>
+    </entry>
+    <entry name="panelCompactWidth" type="Int">
+      <default>50</default>
+    </entry>
+    <entry name="showDataUsage" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="bgColor" type="Color">
+      <default>#000000</default>
+    </entry>
+    <entry name="bgOpacity" type="Double">
+      <default>0.05</default>
+    </entry>
+    <entry name="cornerRadius" type="Int">
+      <default>8</default>
+    </entry>
+    <entry name="dlColor" type="Color">
+      <default>#2ecc71</default>
+    </entry>
+    <entry name="upColor" type="Color">
+      <default>#ff3b30</default>
+    </entry>
+    <entry name="textColor" type="Color">
+      <default>#fbfbfb</default>
+    </entry>
+    <entry name="alltimeDl" type="Double">
+      <default>1384285139370</default>
+    </entry>
+    <entry name="alltimeUp" type="Double">
+      <default>667524454654</default>
+    </entry>
+    <entry name="iconName" type="String">
+      <default>qbittorrent</default>
+    </entry>
+    <entry name="iconColor" type="Color">
+      <default>#ffffff</default>
+    </entry>
+    <entry name="useIconColor" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="historyCache" type="String">
+      <default></default>
+    </entry>
+  </group>
+</kcfg>

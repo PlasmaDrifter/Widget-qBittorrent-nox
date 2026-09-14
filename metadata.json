@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "JMC"
+            }
+        ],
+        "Category": "Network",
+        "Description": "Real-time download and upload speed graph for qBittorrent",
+        "Icon": "qbittorrent",
+        "Id": "local.widget.qbittorrentgraph",
+        "License": "GPL-3.0+",
+        "Name": "qBittorrent Speed Monitor",
+        "Version": "1.0.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-MainScript": "ui/main.qml"
+}
