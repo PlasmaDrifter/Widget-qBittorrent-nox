@@ -12,7 +12,7 @@
         "Id": "local.widget.qbittorrentgraph",
         "License": "GPL-3.0+",
         "Name": "qBittorrent Speed Monitor",
-        "Version": "1.0.0"
+        "Version": "0.8.0"
     },
     "X-Plasma-API-Minimum-Version": "6.0",
     "X-Plasma-MainScript": "ui/main.qml"
