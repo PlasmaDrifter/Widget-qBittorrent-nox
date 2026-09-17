@@ -1,6 +1,8 @@
 # qBittorrent Speed Monitor Plasmoid (Widget-qBittorrent-nox)
 
-[![Reddit](https://img.shields.io/badge/Reddit-r%2FPlasmaDrifterProjects-FF4500?style=flat-square&logo=reddit&logoColor=white)](https://reddit.com/r/PlasmaDrifterProjects)
+> [!NOTE]
+> **Community Hub:** Have questions, custom configs, or feature ideas? Join our subreddit community at [**r/PlasmaDrifterProjects**](https://reddit.com/r/PlasmaDrifterProjects)!
+
 A lightweight, modern, and highly customizable **KDE Plasma 6** widget for monitoring real-time download/upload network traffic, historical transfer graphs, and lifetime statistics from your **qBittorrent-nox** or desktop qBittorrent WebUI.
 
 ![qBittorrent Speed Monitor Preview](preview.png)
