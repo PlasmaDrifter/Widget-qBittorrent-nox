@@ -89,7 +89,8 @@ PlasmoidItem {
             } else {
                 dt = Math.max(0.5, (rawSamples[i].t - rawSamples[i - 1].t) / 1000);
             }
-            dt = Math.min(60, dt);
+            // Allow downsampled historical buckets to reflect their full time span
+            dt = Math.min(3600, dt);
             totalDl += rawSamples[i].dl * dt;
             totalUp += rawSamples[i].up * dt;
         }
