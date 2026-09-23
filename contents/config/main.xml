@@ -18,7 +18,7 @@
       <default>4</default>
     </entry>
     <entry name="selectedTimeframe" type="String">
-      <default>1h</default>
+      <default>3h</default>
     </entry>
     <entry name="dlMaxMbps" type="Int">
       <default>50</default>

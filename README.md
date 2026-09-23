@@ -16,7 +16,7 @@ A lightweight, modern, and highly customizable **KDE Plasma 6** widget for monit
   - Batched KConfig disk writes (10-minute intervals and system exit) to prevent constant drive activity.
   - Efficient HTML5 / QtQuick Canvas smooth Bezier spline graph rendering.
 - **Multi-Timeframe Transfer History**:
-  - View network activity curves across **1 hour**, **12 hours**, **24 hours**, and **7 days**.
+  - View network activity curves across **3 hours**, **12 hours**, **24 hours**, and **7 days**.
   - Displays total data transferred (downloaded & uploaded) specifically for the selected timeframe.
   - Persistent historical data caching across sessions and system reboots.
 - **Session & Lifetime Data Accounting**:

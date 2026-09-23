@@ -22,7 +22,7 @@ PlasmoidItem {
     readonly property string password: plasmoid.configuration.password !== undefined ? plasmoid.configuration.password : "zippy-escapade-Cornea-aLLenable908332"
     readonly property int updateInterval: plasmoid.configuration.updateInterval || 4
 
-    property string selectedTimeframe: plasmoid.configuration.selectedTimeframe || "1h"
+    property string selectedTimeframe: plasmoid.configuration.selectedTimeframe || "3h"
 
     readonly property int dlMaxMbps: plasmoid.configuration.dlMaxMbps || 50
     readonly property int upMaxKbps: plasmoid.configuration.upMaxKbps || 2000
@@ -64,7 +64,7 @@ PlasmoidItem {
 
     function updateTimeframeStats() {
         var now = Date.now();
-        var rangeMs = 3600000;
+        var rangeMs = 3 * 3600000;
         if (root.selectedTimeframe === "12h") rangeMs = 12 * 3600000;
         else if (root.selectedTimeframe === "24h") rangeMs = 24 * 3600000;
         else if (root.selectedTimeframe === "7d") rangeMs = 7 * 24 * 3600000;
@@ -433,13 +433,13 @@ PlasmoidItem {
                         anchors.centerIn: parent
                         spacing: 5
 
-                        // Timeframe Selector Buttons (1h, 12h, 24h, 7d)
+                        // Timeframe Selector Buttons (3h, 12h, 24h, 7d)
                         Row {
                             anchors.horizontalCenter: parent.horizontalCenter
                             spacing: 4
 
                             Repeater {
-                                model: ["1h", "12h", "24h", "7d"]
+                                model: ["3h", "12h", "24h", "7d"]
                                 delegate: Rectangle {
                                     width: 36
                                     height: 20
@@ -528,8 +528,8 @@ PlasmoidItem {
                             ctx.clearRect(0, 0, width, height);
 
                             var now = Date.now();
-                            var rangeMs = 3600000;
-                            var numDividers = 4;
+                            var rangeMs = 3 * 3600000;
+                            var numDividers = 3;
                             if (root.selectedTimeframe === "12h") {
                                 rangeMs = 12 * 3600000;
                                 numDividers = 6;
