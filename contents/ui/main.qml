@@ -239,30 +239,32 @@ PlasmoidItem {
                         store.push({ t: now, dl: currentDlSpeed, up: currentUpSpeed });
 
                         var cutoff7d = now - (7 * 24 * 60 * 60 * 1000);
-                        while (store.length > 0 && store[0].t < cutoff7d) {
-                            store.shift();
-                        }
+                        var cutoff24h = now - (24 * 60 * 60 * 1000);
+                        var cutoff3h = now - (3 * 60 * 60 * 1000);
 
-                        if (store.length > 1000) {
+                        // Stratified retention: keeps high resolution for recent data while preserving full 7 days
+                        if (store.length > 1500) {
                             var compacted = [];
-                            var oneHourAgo = now - 3600000;
-                            var idx = 0;
-                            while (idx < store.length && store[idx].t < oneHourAgo) {
-                                if (idx + 1 < store.length && store[idx + 1].t < oneHourAgo) {
-                                    compacted.push({
-                                        t: Math.round((store[idx].t + store[idx + 1].t) / 2),
-                                        dl: (store[idx].dl + store[idx + 1].dl) / 2,
-                                        up: (store[idx].up + store[idx + 1].up) / 2
-                                    });
-                                    idx += 2;
-                                } else {
-                                    compacted.push(store[idx]);
-                                    idx++;
+                            var lastT = 0;
+                            for (var s = 0; s < store.length; s++) {
+                                var pt = store[s];
+                                if (!pt || pt.t < cutoff7d) continue;
+
+                                var minGap = 12000; // ~12s for last 3 hours
+                                if (pt.t < cutoff24h) {
+                                    minGap = 600000; // 10 minutes for 1d - 7d
+                                } else if (pt.t < cutoff3h) {
+                                    minGap = 120000; // 2 minutes for 3h - 24h
                                 }
-                            }
-                            while (idx < store.length) {
-                                compacted.push(store[idx]);
-                                idx++;
+
+                                if ((pt.t - lastT >= minGap) || (s === store.length - 1)) {
+                                    compacted.push(pt);
+                                    lastT = pt.t;
+                                } else if (compacted.length > 0) {
+                                    var prevPt = compacted[compacted.length - 1];
+                                    prevPt.dl = (prevPt.dl + pt.dl) / 2;
+                                    prevPt.up = (prevPt.up + pt.up) / 2;
+                                }
                             }
                             store = compacted;
                         }
