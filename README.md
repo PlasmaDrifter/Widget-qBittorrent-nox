@@ -7,6 +7,8 @@ A lightweight, modern, and highly customizable **KDE Plasma 6** widget for monit
 
 ![qBittorrent Speed Monitor Preview](preview.png)
 
+![qBittorrent Speed Monitor Settings](settings.png)
+
 ---
 
 ## Features
