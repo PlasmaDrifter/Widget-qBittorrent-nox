@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.LocalStorage
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.components as PlasmaComponents3
@@ -17,9 +18,9 @@ PlasmoidItem {
     compactRepresentation: compactView
     fullRepresentation: fullView
 
-    readonly property string webUiUrl: plasmoid.configuration.webUiUrl || "http://100.76.111.34:8080"
-    readonly property string username: plasmoid.configuration.username || "nobara"
-    readonly property string password: plasmoid.configuration.password !== undefined ? plasmoid.configuration.password : "zippy-escapade-Cornea-aLLenable908332"
+    readonly property string webUiUrl: plasmoid.configuration.webUiUrl || "http://localhost:8080"
+    readonly property string username: plasmoid.configuration.username || ""
+    readonly property string password: plasmoid.configuration.password !== undefined ? plasmoid.configuration.password : ""
     readonly property int updateInterval: plasmoid.configuration.updateInterval || 4
 
     property string selectedTimeframe: plasmoid.configuration.selectedTimeframe || "3h"
@@ -49,8 +50,8 @@ PlasmoidItem {
 
     property real sessionDlBytes: 0
     property real sessionUpBytes: 0
-    property real lifetimeDlBytes: Math.max(1384285139370, (plasmoid.configuration.alltimeDl !== undefined ? plasmoid.configuration.alltimeDl : 0))
-    property real lifetimeUpBytes: Math.max(667524454654, (plasmoid.configuration.alltimeUp !== undefined ? plasmoid.configuration.alltimeUp : 0))
+    property real lifetimeDlBytes: (plasmoid.configuration.alltimeDl !== undefined && plasmoid.configuration.alltimeDl >= 0) ? plasmoid.configuration.alltimeDl : 0
+    property real lifetimeUpBytes: (plasmoid.configuration.alltimeUp !== undefined && plasmoid.configuration.alltimeUp >= 0) ? plasmoid.configuration.alltimeUp : 0
     property real prevSessionDl: -1
     property real prevSessionUp: -1
     property real lastFetchTime: 0
@@ -61,6 +62,44 @@ PlasmoidItem {
     property string statusText: ""
     property string sidCookie: ""
     property bool isLoggingIn: false
+    property bool isFetching: false
+
+    function openHistoryDb() {
+        return LocalStorage.openDatabaseSync("qbittorrentgraph_history", "1.0", "qBittorrent Graph History", 4000000);
+    }
+
+    function writeHistoryDb(serialized) {
+        try {
+            var db = openHistoryDb();
+            var key = String(Plasmoid.id || "default");
+            db.transaction(function(tx) {
+                tx.executeSql("CREATE TABLE IF NOT EXISTS history(id TEXT PRIMARY KEY, samples TEXT, updated_at INTEGER)");
+                tx.executeSql("INSERT OR REPLACE INTO history(id, samples, updated_at) VALUES (?, ?, ?)", [key, serialized, Date.now()]);
+            });
+            return true;
+        } catch (e) {
+            console.warn("qbittorrentgraph: SQLite write failed", e);
+            return false;
+        }
+    }
+
+    function readHistoryDb() {
+        var result = "";
+        try {
+            var db = openHistoryDb();
+            var key = String(Plasmoid.id || "default");
+            db.transaction(function(tx) {
+                tx.executeSql("CREATE TABLE IF NOT EXISTS history(id TEXT PRIMARY KEY, samples TEXT, updated_at INTEGER)");
+                var rs = tx.executeSql("SELECT samples FROM history WHERE id = ?", [key]);
+                if (rs.rows.length > 0) {
+                    result = rs.rows.item(0).samples || "";
+                }
+            });
+        } catch (e) {
+            console.warn("qbittorrentgraph: SQLite read failed", e);
+        }
+        return result;
+    }
 
     function updateTimeframeStats() {
         var now = Date.now();
@@ -100,9 +139,9 @@ PlasmoidItem {
     }
 
     function formatSpeed(bytesPerSec) {
-        if (bytesPerSec >= 1048576 * 1024) return (bytesPerSec / (1048576 * 1024)).toFixed(1) + " GB/s";
-        if (bytesPerSec >= 1048576) return (bytesPerSec / 1048576).toFixed(1) + " MB/s";
-        if (bytesPerSec >= 1024) return (bytesPerSec / 1024).toFixed(1) + " KB/s";
+        if (bytesPerSec >= 1048576 * 1024) return (bytesPerSec / (1048576 * 1024)).toFixed(1) + " GiB/s";
+        if (bytesPerSec >= 1048576) return (bytesPerSec / 1048576).toFixed(1) + " MiB/s";
+        if (bytesPerSec >= 1024) return (bytesPerSec / 1024).toFixed(1) + " KiB/s";
         return bytesPerSec.toFixed(0) + " B/s";
     }
 
@@ -122,17 +161,23 @@ PlasmoidItem {
     function saveLifetimeStats() {
         var store = (historyStore || []).slice();
         var serialized = JSON.stringify(store);
-        plasmoid.configuration.historyCache = serialized;
+        writeHistoryDb(serialized);
+        if (plasmoid.configuration.historyCache && plasmoid.configuration.historyCache.length > 0) {
+            plasmoid.configuration.historyCache = "";
+        }
         plasmoid.configuration.alltimeDl = lifetimeDlBytes;
         plasmoid.configuration.alltimeUp = lifetimeUpBytes;
-        if (typeof plasmoid.configuration.writeConfig === "function") {
-            plasmoid.configuration.writeConfig();
-        }
     }
 
     Component.onCompleted: {
         try {
-            var rawCache = plasmoid.configuration.historyCache;
+            var legacyCache = plasmoid.configuration.historyCache;
+            var rawCache = readHistoryDb();
+            var migratedFromLegacy = false;
+            if ((!rawCache || rawCache.length <= 5) && legacyCache && legacyCache.length > 5) {
+                rawCache = legacyCache;
+                migratedFromLegacy = true;
+            }
             if (rawCache && rawCache.length > 5) {
                 var loaded = JSON.parse(rawCache);
                 if (Array.isArray(loaded) && loaded.length > 0) {
@@ -144,6 +189,9 @@ PlasmoidItem {
                     if (valid.length > 0) {
                         historyStore = valid;
                         updateTimeframeStats();
+                    }
+                    if (migratedFromLegacy && writeHistoryDb(JSON.stringify(valid))) {
+                        plasmoid.configuration.historyCache = "";
                     }
                 }
             }
@@ -157,9 +205,20 @@ PlasmoidItem {
         isLoggingIn = true;
 
         var req = new XMLHttpRequest();
+        req.timeout = 5000;
         req.withCredentials = true;
         req.open("POST", webUiUrl + "/api/v2/auth/login");
         req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        req.onerror = function() {
+            isLoggingIn = false;
+            statusText = "Connection failed";
+            if (callback) callback(false);
+        };
+        req.ontimeout = function() {
+            isLoggingIn = false;
+            statusText = "Auth timeout";
+            if (callback) callback(false);
+        };
         req.onreadystatechange = function() {
             if (req.readyState === XMLHttpRequest.DONE) {
                 isLoggingIn = false;
@@ -170,10 +229,18 @@ PlasmoidItem {
                     var m = allHeaders.match(/Set-Cookie:\s*([^\r\n]+)/i);
                     if (m) setCookie = m[1];
                 }
+                if (setCookie) {
+                    var sidMatch = setCookie.match(/SID=[^;,\r\n]+/i);
+                    if (sidMatch) {
+                        sidCookie = sidMatch[0];
+                    }
+                }
 
                 if (req.status === 200 && (text === "Ok." || sidCookie !== "")) {
+                    statusText = "";
                     if (callback) callback(true);
                 } else if (req.status === 200 || req.status === 204) {
+                    statusText = "";
                     if (callback) callback(true);
                 } else {
                     statusText = "Auth Error (" + req.status + ")";
@@ -186,14 +253,27 @@ PlasmoidItem {
     }
 
     function fetchStats() {
+        if (isFetching) return;
+        isFetching = true;
+
         var req = new XMLHttpRequest();
+        req.timeout = 5000;
         req.withCredentials = true;
         req.open("GET", webUiUrl + "/api/v2/transfer/info");
         if (sidCookie !== "") {
             req.setRequestHeader("Cookie", sidCookie);
         }
+        req.onerror = function() {
+            isFetching = false;
+            statusText = "Offline / unreachable";
+        };
+        req.ontimeout = function() {
+            isFetching = false;
+            statusText = "Request timeout";
+        };
         req.onreadystatechange = function() {
             if (req.readyState === XMLHttpRequest.DONE) {
+                isFetching = false;
                 if (req.status === 200) {
                     try {
                         var parsedData = JSON.parse(req.responseText);
@@ -212,10 +292,11 @@ PlasmoidItem {
                         if (prevSessionDl >= 0 && lastFetchTime > 0) {
                             var deltaDl = newSessDl >= prevSessionDl ? (newSessDl - prevSessionDl) : newSessDl;
                             var deltaUp = newSessUp >= prevSessionUp ? (newSessUp - prevSessionUp) : newSessUp;
-                            var dt = Math.max(0.5, (now - lastFetchTime) / 1000);
+                            var rawDt = Math.max(0.5, (now - lastFetchTime) / 1000);
+                            var clampedDt = Math.min(rawDt, Math.max(60, root.updateInterval * 4));
 
-                            calcDl = deltaDl / dt;
-                            calcUp = deltaUp / dt;
+                            calcDl = deltaDl / clampedDt;
+                            calcUp = deltaUp / clampedDt;
 
                             if (deltaDl > 0 || deltaUp > 0) {
                                 lifetimeDlBytes += deltaDl;
@@ -242,19 +323,19 @@ PlasmoidItem {
                         var cutoff24h = now - (24 * 60 * 60 * 1000);
                         var cutoff3h = now - (3 * 60 * 60 * 1000);
 
-                        // Stratified retention: keeps high resolution for recent data while preserving full 7 days
-                        if (store.length > 1500) {
+                        // Stratified retention tuned below threshold (~1420 max samples) so compaction only runs periodically
+                        if (store.length > 1600) {
                             var compacted = [];
                             var lastT = 0;
                             for (var s = 0; s < store.length; s++) {
                                 var pt = store[s];
                                 if (!pt || pt.t < cutoff7d) continue;
 
-                                var minGap = 12000; // ~12s for last 3 hours
+                                var minGap = 15000; // 15s for last 3h (<= 720 pts)
                                 if (pt.t < cutoff24h) {
-                                    minGap = 600000; // 10 minutes for 1d - 7d
+                                    minGap = 1800000; // 30m for 1d - 7d (<= 288 pts)
                                 } else if (pt.t < cutoff3h) {
-                                    minGap = 120000; // 2 minutes for 3h - 24h
+                                    minGap = 180000; // 3m for 3h - 24h (<= 420 pts)
                                 }
 
                                 if ((pt.t - lastT >= minGap) || (s === store.length - 1)) {
@@ -265,6 +346,9 @@ PlasmoidItem {
                                     prevPt.dl = (prevPt.dl + pt.dl) / 2;
                                     prevPt.up = (prevPt.up + pt.up) / 2;
                                 }
+                            }
+                            if (compacted.length > 1450) {
+                                compacted = compacted.slice(compacted.length - 1450);
                             }
                             store = compacted;
                         }
@@ -342,7 +426,11 @@ PlasmoidItem {
             fetchStats();
         }
     }
-    onHistoryStoreChanged: updateTimeframeStats()
+    onHistoryStoreChanged: {
+        if (root.expanded || plasmoid.location === PlasmaCore.Types.Floating) {
+            updateTimeframeStats();
+        }
+    }
     onSelectedTimeframeChanged: updateTimeframeStats()
 
     Timer {
@@ -557,35 +645,41 @@ PlasmoidItem {
                             }
                             ctx.globalAlpha = 1.0;
 
-                            var rawSamples = (root.historyStore || []).filter(function(item) {
-                                return item.t >= startTime;
-                            });
-
-                            if (rawSamples.length === 0) return;
+                            var store = root.historyStore || [];
+                            if (store.length === 0) return;
 
                             var maxDlScale = (root.configuredDlMbps * 1048576);
                             var maxUpScale = (root.configuredUpKbps * 1024);
 
                             var numBuckets = Math.min(100, Math.max(30, Math.floor(width / 4)));
                             var bucketWidthMs = rangeMs / numBuckets;
+                            var sumDl = new Array(numBuckets);
+                            var sumUp = new Array(numBuckets);
+                            var counts = new Array(numBuckets);
+                            for (var z = 0; z < numBuckets; z++) {
+                                sumDl[z] = 0;
+                                sumUp[z] = 0;
+                                counts[z] = 0;
+                            }
+
+                            var anyInRange = false;
+                            for (var idx = 0; idx < store.length; idx++) {
+                                var pt = store[idx];
+                                if (!pt || pt.t < startTime || pt.t > now) continue;
+                                var bIdx = Math.min(numBuckets - 1, Math.max(0, Math.floor((pt.t - startTime) / bucketWidthMs)));
+                                sumDl[bIdx] += pt.dl;
+                                sumUp[bIdx] += pt.up;
+                                counts[bIdx]++;
+                                anyInRange = true;
+                            }
+                            if (!anyInRange) return;
+
                             var samples = [];
-
                             for (var b = 0; b < numBuckets; b++) {
-                                var bStart = startTime + (b * bucketWidthMs);
-                                var bEnd = bStart + bucketWidthMs;
-                                var inBucket = rawSamples.filter(function(s) {
-                                    return s.t >= bStart && s.t < bEnd;
-                                });
-
-                                if (inBucket.length > 0) {
-                                    var sumDl = 0, sumUp = 0;
-                                    for (var k = 0; k < inBucket.length; k++) {
-                                        sumDl += inBucket[k].dl;
-                                        sumUp += inBucket[k].up;
-                                    }
+                                if (counts[b] > 0) {
                                     samples.push({
-                                        avgDl: sumDl / inBucket.length,
-                                        avgUp: sumUp / inBucket.length
+                                        avgDl: sumDl[b] / counts[b],
+                                        avgUp: sumUp[b] / counts[b]
                                     });
                                 } else {
                                     samples.push({ avgDl: 0, avgUp: 0 });
@@ -599,6 +693,16 @@ PlasmoidItem {
                             root.renderSmoothGraph(ctx, samples, function(s){ return s.avgUp; }, maxUpScale, root.upColor, false, 0.0, width, height);
                         }
                     }
+                }
+
+                PlasmaComponents3.Label {
+                    visible: root.statusText !== ""
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: root.statusText
+                    color: Kirigami.Theme.negativeTextColor
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
                 }
 
                 // Data Usage Footer Panel

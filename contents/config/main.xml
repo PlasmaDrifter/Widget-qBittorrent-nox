@@ -6,13 +6,13 @@
   <kcfgfile name=""/>
   <group name="General">
     <entry name="webUiUrl" type="String">
-      <default>http://100.76.111.34:8080</default>
+      <default>http://localhost:8080</default>
     </entry>
     <entry name="username" type="String">
-      <default>nobara</default>
+      <default>admin</default>
     </entry>
     <entry name="password" type="String">
-      <default>zippy-escapade-Cornea-aLLenable908332</default>
+      <default></default>
     </entry>
     <entry name="updateInterval" type="Int">
       <default>4</default>
@@ -25,9 +25,6 @@
     </entry>
     <entry name="upMaxKbps" type="Int">
       <default>2000</default>
-    </entry>
-    <entry name="panelCompactWidth" type="Int">
-      <default>50</default>
     </entry>
     <entry name="showDataUsage" type="Bool">
       <default>true</default>
@@ -51,10 +48,10 @@
       <default>#fbfbfb</default>
     </entry>
     <entry name="alltimeDl" type="Double">
-      <default>1384285139370</default>
+      <default>0</default>
     </entry>
     <entry name="alltimeUp" type="Double">
-      <default>667524454654</default>
+      <default>0</default>
     </entry>
     <entry name="iconName" type="String">
       <default>qbittorrent</default>
